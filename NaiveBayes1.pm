@@ -1,6 +1,6 @@
 # (c) 2003 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.8 2003/09/03 11:26:01 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.10 2003/09/04 11:05:25 vlado Exp $
 
 package AI::NaiveBayes1;
 
@@ -15,11 +15,11 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '0.03';
+our $VERSION = '1.0';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.8 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.10 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -162,12 +162,12 @@ sub print_model {
     $r .= join("\n", @lines) . "\n". $lines[1]. "\n\n";
 
     # prepare conditional tables
-    my @attributes = $self->attributes;
+    my @attributes = sort $self->attributes;
     foreach my $att (@attributes) {
 	@lines = ( "category ", '-' );
 	my @lines1 = ( "$att ", '-' );
 	my @lines2 = ( "P( $att | category )", '-' );
-	my @attvals = keys(%{ $self->{stat_attributes}{$att} });
+	my @attvals = sort keys(%{ $self->{stat_attributes}{$att} });
 	foreach my $label (@labels) {
 	    foreach my $attval (@attvals) {
 		push @lines, "$label ";
@@ -300,16 +300,6 @@ represented in C<YAML>.  Requires YAML module.
 
 =over 4
 
-=item export_to_YAML();
-
-Returns a C<YAML> string representation of an C<AI::NaiveBayes1>
-object.  Requires YAML module.
-
-=item export_to_YAML_file( $file_name );
-
-Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
-object to a file.  Requires YAML module.
-
 =item add_instance( attributes => HASH, label => STRING|ARRAY )
 
 Adds a training instance to the categorizer.
@@ -317,6 +307,21 @@ Adds a training instance to the categorizer.
 =item add_instances( attributes => HASH, label => STRING|ARRAY, cases => NUMBER )
 
 Adds a number of identical instances to the categorizer.
+
+=item export_to_YAML()
+
+Returns a C<YAML> string representation of an C<AI::NaiveBayes1>
+object.  Requires YAML module.
+
+=item export_to_YAML_file( $file_name )
+
+Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
+object to a file.  Requires YAML module.
+
+=item print_model()
+
+Returns a string, human-friendly representation of the model.
+The model is supposed to be trained before calling this method.
 
 =item train()
 
@@ -360,7 +365,8 @@ module is a generic, basic Naive Bayes algorithm.
 =head1 THANKS
 
 I'd like to thank Tom Dyson and Dan Von Kohorn for bug reports,
-support, and comments.
+support, and comments; and to CPAN-testers (jlatour, Jost.Krieger) for
+their bug reports.
 
 =head1 AUTHOR
 

@@ -9,3 +9,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 0.03  Wed Sep  3 08:25:43 ADT 2003
 	- bug fix
 	- import and export to/from string and file (using YAML)
+
+1.0   Thu Sep  4 08:01:19 ADT 2003
+        - bug fix in testing (attributes and labels are sorted now in
+  	  print_model)

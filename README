@@ -1,7 +1,10 @@
-AI/NaiveBayes1 version 0.01
-===========================
+<? read_starfish_conf();echo "AI/NaiveBayes1 version $ModuleVersion\n".'='x26!>
+#+
+AI/NaiveBayes1 version 1.0
+==========================
+#-
 
-This is an implementation of basic the Naive Bayes classification
+This is an implementation of the basic Naive Bayes classification
 algorithm.  Documentation is a part of the file NaiveBayes1.pm in the
 pod format.  To convert it into manual page format, type something
 like the following:
@@ -19,8 +22,8 @@ To install this module type the following:
 
 DEPENDENCIES
 
-No significant dependecies, as far as I know.  Let me know if you find
-something important to add.
+The methods for importing to and exporting from YAML format require
+module YAML.
 
 COPYRIGHT AND LICENCE
 

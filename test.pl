@@ -15,10 +15,6 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
 
-#mkdir 'tmp', 0700 unless -d 'tmp';
-#mkdir 'AI', 0700 unless -d 'AI';
-#`ln -s ../NaiveBayes1.pm AI/NaiveBayes1.pm`;
-
 print "perl testfiles/test1.pl > testfiles/tmp1\n";
 print `perl testfiles/test1.pl > testfiles/tmp1`;
 my $f = getfile('testfiles/tmp1');
