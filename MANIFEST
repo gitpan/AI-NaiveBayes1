@@ -6,3 +6,7 @@ NaiveBayes1.pm
 test.pl
 testfiles/test1.pl
 testfiles/test1.out
+t/1.t
+t/1-1.out
+t/1-2.out
+t/auxfunctions.pl

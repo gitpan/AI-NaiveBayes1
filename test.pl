@@ -6,7 +6,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 1 };
+BEGIN { plan tests => 2 };
 use AI::NaiveBayes1;
 ok(1); # If we made it this far, we're ok.
 
@@ -15,9 +15,9 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
 
-mkdir 'tmp', 0700 unless -d 'tmp';
-mkdir 'AI', 0700 unless -d 'AI';
-`ln -s ../NaiveBayes1.pm AI/NaiveBayes1.pm`;
+#mkdir 'tmp', 0700 unless -d 'tmp';
+#mkdir 'AI', 0700 unless -d 'AI';
+#`ln -s ../NaiveBayes1.pm AI/NaiveBayes1.pm`;
 
 print "perl testfiles/test1.pl > testfiles/tmp1\n";
 print `perl testfiles/test1.pl > testfiles/tmp1`;

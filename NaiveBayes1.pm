@@ -1,6 +1,6 @@
 # (c) 2003 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.3 2003/05/09 18:58:55 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.8 2003/09/03 11:26:01 vlado Exp $
 
 package AI::NaiveBayes1;
 
@@ -15,24 +15,16 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.3 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.8 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
 # non-exported package globals go here
 use vars qw();
-
-# initialize package globals, first exported ones
-#$Var1   = '';
-#%Hashit = ();
-
-# then the others (which are still accessible as $Some::Module::stuff)
-#$stuff  = '';
-#@more   = ();
 
 sub new {
   my $package = shift;
@@ -44,6 +36,20 @@ sub new {
 		stat_labels => {},
 		stat_attributes => {},
 	       }, $package;
+}
+
+sub import_from_YAML {
+    my $package = shift;
+    my $yaml = shift;
+    my $self = YAML::Load($yaml);
+    return $self;
+}
+
+sub import_from_YAML_file {
+    my $package = shift;
+    my $yamlf = shift;
+    my $self = YAML::LoadFile($yamlf);
+    return $self;
 }
 
 sub add_instances {
@@ -204,6 +210,19 @@ sub attributes {
   return keys %{ $self->{stat_attributes} };
 }
 
+sub export_to_YAML {
+    my $self = shift;
+    require YAML;
+    return YAML::Dump($self);
+}
+
+sub export_to_YAML_file {
+    my $self = shift;
+    my $file = shift;
+    require YAML;
+    YAML::DumpFile($file, $self);
+}
+
 1;
 __END__
 
@@ -213,8 +232,8 @@ AI::NaiveBayes1 - Bayesian prediction of categories
 
 =head1 SYNOPSIS
 
-  use Algorithm::NaiveBayes1;
-  my $nb = Algorithm::NaiveBayes1->new;
+  use AI::NaiveBayes1;
+  my $nb = AI::NaiveBayes1->new;
 
   $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=Y',cases=>30);
   $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=N',cases=>10);
@@ -237,6 +256,18 @@ AI::NaiveBayes1 - Bayesian prediction of categories
       print "for label $k P = " . $result->{$k} . "\n";
   }
 
+  # export the model into a string
+  my $string = $nb->export_to_YAML();
+
+  # create the same model from the string
+  my $nb1 = AI::NaiveBayes1->import_from_YAML($string);
+
+  # write the model to a file (shorter than model->string->file)
+  $nb->export_to_YAML_file('t/tmp1');
+
+  # read the model from a file (shorter than file->string->model)
+  my $nb2 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
+
 
 =head1 DESCRIPTION
 
@@ -245,16 +276,47 @@ algorithm.
 
 =head1 METHODS
 
+=head2 Constructor Methods
+
 =over 4
 
 =item new()
 
-Creates a new C<AI::NaiveBayes1> object and returns it.  At the
-moment there are no parameters that affect anything.
+Creates a new C<AI::NaiveBayes1> object and returns it.
+
+=item import_from_YAML( $string )
+
+Creates a new C<AI::NaiveBayes1> object from a string where it is
+represented in C<YAML>.  Requires YAML module.
+
+=item import_from_YAML_file( $file_name )
+
+Creates a new C<AI::NaiveBayes1> object from a file where it is
+represented in C<YAML>.  Requires YAML module.
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item export_to_YAML();
+
+Returns a C<YAML> string representation of an C<AI::NaiveBayes1>
+object.  Requires YAML module.
+
+=item export_to_YAML_file( $file_name );
+
+Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
+object to a file.  Requires YAML module.
 
 =item add_instance( attributes => HASH, label => STRING|ARRAY )
 
 Adds a training instance to the categorizer.
+
+=item add_instances( attributes => HASH, label => STRING|ARRAY, cases => NUMBER )
+
+Adds a number of identical instances to the categorizer.
 
 =item train()
 
@@ -286,14 +348,19 @@ states:
       P(x|y) = -------------
                    P(y)
 
-and so on...
+and so on... (You can read more about it in many books.)
 
 =head1 HISTORY
 
 Algorithms::NaiveBayes by Ken Williams was not what I needed so I
-wrote this one.  Algorithms::NaiveBayse is oriented towards text
-categorization, it includes smooting, and log probabilities.  This
+wrote this one.  Algorithms::NaiveBayes is oriented towards text
+categorization, it includes smoothing, and log probabilities.  This
 module is a generic, basic Naive Bayes algorithm.
+
+=head1 THANKS
+
+I'd like to thank Tom Dyson and Dan Von Kohorn for bug reports,
+support, and comments.
 
 =head1 AUTHOR
 
