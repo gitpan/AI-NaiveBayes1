@@ -31,6 +31,7 @@ model:
   labelprob:
     repairs=N: 0.62
     repairs=Y: 0.38
+  numerical_attr: {}
 numof_instances: 200
 stat_attributes:
   model:

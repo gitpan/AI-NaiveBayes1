@@ -13,3 +13,8 @@ Revision history for Perl extension AI::NaiveBayes1.
 1.0   Thu Sep  4 08:01:19 ADT 2003
         - bug fix in testing (attributes and labels are sorted now in
   	  print_model)
+
+1.1   Tue Apr 20 08:07:33 ADT 2004
+	- added several more test
+        - implemented optional Gaussian distribution for numerical
+	  attributes

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -Iblib/lib
 
 use AI::NaiveBayes1;
 my $nb = AI::NaiveBayes1->new;
@@ -80,7 +80,7 @@ sub toString($@) {
     if (ref($x) eq "HASH") {
         my @keys =
             intersection( [union(@keyorder, sort(keys(%{ $x })))],
-                          [keys(%{ $x })] );
+                          [sort(keys(%{ $x }))] );
 
 	if (not @keys) {
 	    return "{ }" unless $emailstyle;

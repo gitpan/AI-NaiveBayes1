@@ -9,11 +9,11 @@ WriteMakefile (
    'VERSION_FROM' => $name, # finds $VERSION
    'dist' => { COMPRESS=>"gzip",
                SUFFIX=>"gz",
-               PREOP=>('starfish README; '.
-                       "cp -f README $dir-\$(VERSION); "
-                      ),
+               #PREOP=>('starfish README; '.
+               #        "cp -f README $dir-\$(VERSION); "
+               #       ),
              },
-   'clean' => {FILES => "tmp* testfiles/tmp1 AI *~"},
+   'clean' => {FILES => "tmp* testfiles/tmp1 AI *~ t/tmp1 t/*~"},
    'PREREQ_PM' => {
 		   # Foo::Ey => '1.00',
 		  },

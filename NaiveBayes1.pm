@@ -1,25 +1,21 @@
-# (c) 2003 Vlado Keselj www.cs.dal.ca/~vlado
+# (c) 2003-2004 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.10 2003/09/04 11:05:25 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.13 2004/04/20 11:08:46 vlado Exp $
 
 package AI::NaiveBayes1;
-
 use strict;
-
 require Exporter;
-
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS); # Exporter vars
-
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.10 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.13 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -32,10 +28,16 @@ sub new {
                 attributes => [ ],
 		labels     => [ ],
 		attvals    => {},
+		real_stat => {}, # statistics
 		numof_instances => 0,
 		stat_labels => {},
 		stat_attributes => {},
 	       }, $package;
+}
+
+sub set_real {
+    my ($self, @attr) = @_;
+    %{$self->{real_attr}} = map{$_=>1} @attr;
 }
 
 sub import_from_YAML {
@@ -97,24 +99,66 @@ sub add_instance {
 sub train {
     my $self = shift;
     my $m = $self->{model} = {};
+    $m->{real_attr} = $self->{real_attr};
     
     $m->{labelprob} = {};
     foreach my $label (keys(%{$self->{stat_labels}}))
     { $m->{labelprob}{$label} = $self->{stat_labels}{$label} /
                                 $self->{numof_instances} } 
+
     $m->{condprob} = {};
     foreach my $att (keys(%{$self->{stat_attributes}})) {
-      $m->{condprob}{$att} = {};
-      foreach my $attval (keys(%{$self->{stat_attributes}{$att}})) {
-	  $m->{condprob}{$att}{$attval} = {};
-	  foreach my $label (keys(%{$self->{stat_labels}})) {
-	      $m->{condprob}{$att}{$attval}{$label} =
-		  $self->{stat_attributes}{$att}{$attval}{$label} /
-		      $self->{stat_labels}{$label};
-	  }
-      }
-  }
-}
+        next if $m->{real_attr}->{$att};
+	$m->{condprob}{$att} = {};
+	foreach my $attval (keys(%{$self->{stat_attributes}{$att}})) {
+	    $m->{condprob}{$att}{$attval} = {};
+	    foreach my $label (keys(%{$self->{stat_labels}})) {
+		$m->{condprob}{$att}{$attval}{$label} =
+		    $self->{stat_attributes}{$att}{$attval}{$label} /
+		    $self->{stat_labels}{$label};
+	    }
+	}
+    }
+
+    # For real-valued attributes, we use Gaussian distribution
+    # let us collect statistics
+    foreach my $att (keys %{$m->{real_attr}}) {
+        $m->{real_stat}->{$att} = {};
+        foreach my $attval (keys %{$self->{stat_attributes}{$att}}){
+            foreach my $label (keys %{$self->{stat_attributes}{$att}{$attval}}){
+                $m->{real_stat}{$att}{$label}{sum}
+                += $attval * $self->{stat_attributes}{$att}{$attval}{$label};
+
+                $m->{real_stat}{$att}{$label}{count}
+                += $self->{stat_attributes}{$att}{$attval}{$label};
+            }
+            foreach my $label (keys %{$self->{stat_attributes}{$att}{$attval}}){
+		next if
+                !defined($m->{real_stat}{$att}{$label}{count}) ||
+		$m->{real_stat}{$att}{$label}{count} == 0;
+
+                $m->{real_stat}{$att}{$label}{mean} =
+                    $m->{real_stat}{$att}{$label}{sum} /
+                        $m->{real_stat}{$att}{$label}{count};
+            }
+        }
+
+        # calculate stddev
+        foreach my $attval (keys %{$self->{stat_attributes}{$att}}) {
+            foreach my $label (keys %{$self->{stat_attributes}{$att}{$attval}}){
+                $m->{real_stat}{$att}{$label}{stddev} +=
+		    ($attval - $m->{real_stat}{$att}{$label}{mean})**2 *
+		    $self->{stat_attributes}{$att}{$attval}{$label};
+            }
+        }
+	foreach my $label (keys %{$m->{real_stat}{$att}}) {
+	    $m->{real_stat}{$att}{$label}{stddev} =
+		sqrt($m->{real_stat}{$att}{$label}{stddev} /
+		     ($m->{real_stat}{$att}{$label}{count}-1)
+		     );
+	}
+    }				# foreach real attribute
+}				# end of sub train
 
 sub predict {
   my ($self, %params) = @_;
@@ -125,12 +169,28 @@ sub predict {
   my @labels = @{ $self->{labels} };
   $scores{$_} = $m->{labelprob}{$_} foreach (@labels);
   foreach my $att (keys(%{ $newattrs })) {
+      next if defined $m->{real_attr}->{$att};
       die unless exists($self->{stat_attributes}{$att});
       my $attval = $newattrs->{$att};
       die unless exists($self->{stat_attributes}{$att}{$attval});
       foreach my $label (@labels) {
 	  $scores{$label} *=
 	      $m->{condprob}{$att}{$attval}{$label};
+      }
+  }
+
+  foreach my $att (keys %{$newattrs}){
+      next unless defined $m->{real_attr}->{$att};
+      foreach my $label (@labels) {
+	  die unless exists $m->{real_stat}{$att}{$label}{mean};
+	  $scores{$label} *=
+              0.398942280401433 / $m->{real_stat}{$att}{$label}{stddev}*
+              exp( -0.5 *
+                  ( ( $newattrs->{$att} -
+                      $m->{real_stat}{$att}{$label}{mean})
+                    / $m->{real_stat}{$att}{$label}{stddev}
+                  ) ** 2
+		 );
       }
   }
 
@@ -153,7 +213,7 @@ sub print_model {
     @lines = _append_lines(@lines);
     @lines = map { $_.='| ' } @lines;
     $lines[1] = substr($lines[1],0,length($lines[1])-2).'+-';
-    @lines[0] .= "P(category)";
+    @lines[0] .= "P(category) ";
     foreach my $i (2..$#lines) {
 	$lines[$i] .= $m->{labelprob}{$labels[$i-2]} .' ';
     }
@@ -166,14 +226,22 @@ sub print_model {
     foreach my $att (@attributes) {
 	@lines = ( "category ", '-' );
 	my @lines1 = ( "$att ", '-' );
-	my @lines2 = ( "P( $att | category )", '-' );
+	my @lines2 = ( "P( $att | category ) ", '-' );
 	my @attvals = sort keys(%{ $self->{stat_attributes}{$att} });
 	foreach my $label (@labels) {
-	    foreach my $attval (@attvals) {
+	    if (! exists($m->{real_attr}->{$att})) {
+		foreach my $attval (@attvals) {
+		    push @lines, "$label ";
+		    push @lines1, "$attval ";
+		    push @lines2, $m->{condprob}{$att}{$attval}{$label}
+		    ." ";
+		}
+	    } else {
 		push @lines, "$label ";
-		push @lines1, "$attval ";
-		push @lines2, $m->{condprob}{$att}{$attval}{$label}
-		              ." ";
+		push @lines1, "real ";
+		push @lines2, "Gaussian(mean=".
+		    $m->{real_stat}{$att}{$label}{mean}.",stddev=".
+		    $m->{real_stat}{$att}{$label}{stddev}.") ";
 	    }
 	}
 	@lines = _append_lines(@lines);
@@ -268,6 +336,7 @@ AI::NaiveBayes1 - Bayesian prediction of categories
   # read the model from a file (shorter than file->string->model)
   my $nb2 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
 
+See Examples for more examples.
 
 =head1 DESCRIPTION
 
@@ -284,12 +353,18 @@ algorithm.
 
 Creates a new C<AI::NaiveBayes1> object and returns it.
 
-=item import_from_YAML( $string )
+=item set_real(list_of_attributes)
+
+Delares a list of attributes to be real-valued.  During training,
+their conditional probabilities will be modeled with Gaussian (normal)
+distributions. 
+
+=item import_from_YAML($string)
 
 Creates a new C<AI::NaiveBayes1> object from a string where it is
 represented in C<YAML>.  Requires YAML module.
 
-=item import_from_YAML_file( $file_name )
+=item import_from_YAML_file($file_name)
 
 Creates a new C<AI::NaiveBayes1> object from a file where it is
 represented in C<YAML>.  Requires YAML module.
@@ -300,11 +375,11 @@ represented in C<YAML>.  Requires YAML module.
 
 =over 4
 
-=item add_instance( attributes => HASH, label => STRING|ARRAY )
+=item C<add_instance(attributes=E<gt>HASH,label=E<gt>STRING|ARRAY)>
 
 Adds a training instance to the categorizer.
 
-=item add_instances( attributes => HASH, label => STRING|ARRAY, cases => NUMBER )
+=item C<add_instances(attributes=E<gt>HASH,label=E<gt>STRING|ARRAY,cases=E<gt>NUMBER)>
 
 Adds a number of identical instances to the categorizer.
 
@@ -313,7 +388,7 @@ Adds a number of identical instances to the categorizer.
 Returns a C<YAML> string representation of an C<AI::NaiveBayes1>
 object.  Requires YAML module.
 
-=item export_to_YAML_file( $file_name )
+=item C<export_to_YAML_file( $file_name )>
 
 Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
 object to a file.  Requires YAML module.
@@ -328,7 +403,7 @@ The model is supposed to be trained before calling this method.
 Calculates the probabilities that will be necessary for categorization
 using the C<predict()> method.
 
-=item predict( attributes => HASH )
+=item C<predict( attributes =E<gt> HASH )>
 
 Use this method to predict the label of an unknown instance.  The
 attributes should be of the same format as you passed to
@@ -336,7 +411,7 @@ C<add_instance()>.  C<predict()> returns a hash reference whose keys
 are the names of labels, and whose values are corresponding
 probabilities.
 
-=item labels
+=item C<labels>
 
 Returns a list of all the labels the object knows about (in no
 particular order), or the number of labels if called in a scalar
@@ -355,6 +430,62 @@ states:
 
 and so on... (You can read more about it in many books.)
 
+=head1 EXAMPLES
+
+Example with a real-valued attribute modeled by a Gaussian
+distribution (from Witten I. and Frank E. book "Data Mining" (the WEKA
+book), page 86):
+
+ # @relation weather
+ # 
+ # @attribute outlook {sunny, overcast, rainy}
+ # @attribute temperature real
+ # @attribute humidity real
+ # @attribute windy {TRUE, FALSE}
+ # @attribute play {yes, no}
+ # 
+ # @data
+ # sunny,85,85,FALSE,no
+ # sunny,80,90,TRUE,no
+ # overcast,83,86,FALSE,yes
+ # rainy,70,96,FALSE,yes
+ # rainy,68,80,FALSE,yes
+ # rainy,65,70,TRUE,no
+ # overcast,64,65,TRUE,yes
+ # sunny,72,95,FALSE,no
+ # sunny,69,70,FALSE,yes
+ # rainy,75,80,FALSE,yes
+ # sunny,75,70,TRUE,yes
+ # overcast,72,90,TRUE,yes
+ # overcast,81,75,FALSE,yes
+ # rainy,71,91,TRUE,no
+ 
+ $nb->set_real('temperature', 'humidity');
+ 
+ $nb->add_instance(attributes=>{outlook=>'sunny',temperature=>85,humidity=>85,windy=>'FALSE'},label=>'play=no');
+ $nb->add_instance(attributes=>{outlook=>'sunny',temperature=>80,humidity=>90,windy=>'TRUE'},label=>'play=no');
+ $nb->add_instance(attributes=>{outlook=>'overcast',temperature=>83,humidity=>86,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'rainy',temperature=>70,humidity=>96,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'rainy',temperature=>68,humidity=>80,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'rainy',temperature=>65,humidity=>70,windy=>'TRUE'},label=>'play=no');
+ $nb->add_instance(attributes=>{outlook=>'overcast',temperature=>64,humidity=>65,windy=>'TRUE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'sunny',temperature=>72,humidity=>95,windy=>'FALSE'},label=>'play=no');
+ $nb->add_instance(attributes=>{outlook=>'sunny',temperature=>69,humidity=>70,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'rainy',temperature=>75,humidity=>80,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'sunny',temperature=>75,humidity=>70,windy=>'TRUE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'overcast',temperature=>72,humidity=>90,windy=>'TRUE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'overcast',temperature=>81,humidity=>75,windy=>'FALSE'},label=>'play=yes');
+ $nb->add_instance(attributes=>{outlook=>'rainy',temperature=>71,humidity=>91,windy=>'TRUE'},label=>'play=no');
+ 
+ $nb->train;
+ 
+ my $printedmodel =  "Model:\n" . $nb->print_model;
+ my $p = $nb->predict(attributes=>{outlook=>'sunny',temperature=>66,humidity=>90,windy=>'TRUE'});
+
+ YAML::DumpFile('file', $p);
+ die unless (abs($p->{'play=no'}  - 0.792) < 0.001);
+ die unless(abs($p->{'play=yes'} - 0.208) < 0.001);
+
 =head1 HISTORY
 
 Algorithms::NaiveBayes by Ken Williams was not what I needed so I
@@ -364,22 +495,32 @@ module is a generic, basic Naive Bayes algorithm.
 
 =head1 THANKS
 
-I'd like to thank Tom Dyson and Dan Von Kohorn for bug reports,
-support, and comments; and to CPAN-testers (jlatour, Jost.Krieger) for
-their bug reports.
+I would like to thank the following people (in chronological order):
+
+Tom Dyson and Dan Von Kohorn for bug reports, support, and comments;
+
+to CPAN-testers (jlatour, Jost.Krieger) for their bug reports,
+
+and Yung-chung Lin (xern@ cpan. org) for his implementation of the
+Gaussian model for continuous variables.
 
 =head1 AUTHOR
 
-Copyright 2003 Vlado Keselj www.cs.dal.ca/~vlado
+Copyright 2003-2004 Vlado Keselj www.cs.dal.ca/~vlado
+
+2004 Yung-chung Lin provided implementation of the Gaussian model for
+continous variables.
 
 This script is provided "as is" without expressed or implied warranty.
 This is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
-The latest version can be found at F<http://www.cs.dal.ca/~vlado/srcperl/>.
+The module is available on CPAN (F<http://search.cpan.org/~vlado>), and
+F<http://www.cs.dal.ca/~vlado/srcperl/>.  The latter site is
+updated more frequently.
 
 =head1 SEE ALSO
 
-Algorithms::NaiveBayes, L<perl>.
+Algorithms::NaiveBayes, perl.
 
 =cut
