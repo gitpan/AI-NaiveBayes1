@@ -27,3 +27,8 @@ t/5-2.out
 t/5-3.out
 t/5.t
 t/a2.arff
+t/6.t
+t/6-1.out
+t/6-2.out
+t/6-3.out
+t/6-4.out

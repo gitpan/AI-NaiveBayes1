@@ -1,6 +1,6 @@
-# (c) 2003-2004 Vlado Keselj www.cs.dal.ca/~vlado
+# (c) 2003-2005 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.13 2004/04/20 11:08:46 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.17 2005/03/14 12:04:36 vlado Exp $
 
 package AI::NaiveBayes1;
 use strict;
@@ -11,11 +11,11 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '1.1';
+our $VERSION = '1.2';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.13 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.17 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -113,8 +113,10 @@ sub train {
 	foreach my $attval (keys(%{$self->{stat_attributes}{$att}})) {
 	    $m->{condprob}{$att}{$attval} = {};
 	    foreach my $label (keys(%{$self->{stat_labels}})) {
-		$m->{condprob}{$att}{$attval}{$label} =
-		    $self->{stat_attributes}{$att}{$attval}{$label} /
+		my $a =
+		    exists($self->{stat_attributes}{$att}{$attval}{$label}) ?
+		    $self->{stat_attributes}{$att}{$attval}{$label} : 0;
+		$m->{condprob}{$att}{$attval}{$label} = $a / 
 		    $self->{stat_labels}{$label};
 	    }
 	}
@@ -213,7 +215,7 @@ sub print_model {
     @lines = _append_lines(@lines);
     @lines = map { $_.='| ' } @lines;
     $lines[1] = substr($lines[1],0,length($lines[1])-2).'+-';
-    @lines[0] .= "P(category) ";
+    $lines[0] .= "P(category) ";
     foreach my $i (2..$#lines) {
 	$lines[$i] .= $m->{labelprob}{$labels[$i-2]} .' ';
     }
@@ -428,7 +430,42 @@ states:
       P(x|y) = -------------
                    P(y)
 
-and so on... (You can read more about it in many books.)
+and so on...
+
+This is a pretty standard algorithm explained in many machine learning
+textbooks (e.g., "Data Mining" by Witten and Eibe).
+
+The algorithm relies on estimating P(A|C), where A is an arbitrary
+attribute, and C is the class attribute.  If A is not real-valued,
+then this conditional probability is estimated using a table of all
+possible values for A and C.
+
+If A is real-valued, then the distribution P(A|C) is modeled as a
+Gaussian (normal) distribution for each possible value of C=c,  Hence,
+for each C=c we collect the mean value (m) and standard deviation (s)
+for A during training.  During classification, P(A=a|C=c) is estimated
+using Gaussian distribution, i.e., in the following way:
+                                                                                                                              
+                    1               (a-m)^2
+ P(A=a|C=c) = ------------ * exp( - ------- )
+              sqrt(2*Pi)*s           2*s^2
+                                                                                                                              
+this boils down to the following lines of code:
+                                                                                                                              
+    $scores{$label} *=
+    0.398942280401433 / $m->{real_stat}{$att}{$label}{stddev}*
+      exp( -0.5 *
+           ( ( $newattrs->{$att} -
+               $m->{real_stat}{$att}{$label}{mean})
+             / $m->{real_stat}{$att}{$label}{stddev}
+           ) ** 2
+	   );
+                                                                                                                              
+i.e.,
+                                                                                                                              
+  P(A=a|C=c) = 0.398942280401433 / s *
+    exp( -0.5 * ( ( a-m ) / s ) ** 2 );
+
 
 =head1 EXAMPLES
 
@@ -495,20 +532,25 @@ module is a generic, basic Naive Bayes algorithm.
 
 =head1 THANKS
 
-I would like to thank the following people (in chronological order):
+I would like to thank Yung-chung Lin (xern@ cpan. org) for his
+implementation of the Gaussian model for continuous variables,
+and the following people for bug reports, support, and comments (in
+chronological order):
 
-Tom Dyson and Dan Von Kohorn for bug reports, support, and comments;
+Tom Dyson
 
-to CPAN-testers (jlatour, Jost.Krieger) for their bug reports,
+Dan Von Kohorn
 
-and Yung-chung Lin (xern@ cpan. org) for his implementation of the
-Gaussian model for continuous variables.
+CPAN-testers (jlatour, Jost.Krieger)
+
+Craig Talbert
+
+and Andrew Brian Clegg.
 
 =head1 AUTHOR
 
-Copyright 2003-2004 Vlado Keselj www.cs.dal.ca/~vlado
-
-2004 Yung-chung Lin provided implementation of the Gaussian model for
+Copyright 2003-2005 Vlado Keselj http://www.cs.dal.ca/~vlado.
+In 2004 Yung-chung Lin provided implementation of the Gaussian model for
 continous variables.
 
 This script is provided "as is" without expressed or implied warranty.

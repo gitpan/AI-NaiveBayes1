@@ -18,3 +18,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 	- added several more test
         - implemented optional Gaussian distribution for numerical
 	  attributes
+
+1.2   Mon Mar 14 08:03:16 AST 2005
+	- addition to documentation
+	- fixing a minor bug and a warning

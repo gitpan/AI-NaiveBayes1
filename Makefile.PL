@@ -13,7 +13,7 @@ WriteMakefile (
                #        "cp -f README $dir-\$(VERSION); "
                #       ),
              },
-   'clean' => {FILES => "tmp* testfiles/tmp1 AI *~ t/tmp1 t/*~"},
+   'clean' => {FILES => "tmp* testfiles/tmp1 AI *~ t/tmp1 t/*~ t/tmp6 t/tmp6-2"},
    'PREREQ_PM' => {
 		   # Foo::Ey => '1.00',
 		  },
