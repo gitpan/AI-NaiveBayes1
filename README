@@ -1,0 +1,31 @@
+AI/NaiveBayes1 version 0.01
+===========================
+
+This is an implementation of basic the Naive Bayes classification
+algorithm.  Documentation is a part of the file NaiveBayes1.pm in the
+pod format.  To convert it into manual page format, type something
+like the following:
+
+	  pod2html NaiveBayes1.pm
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+No significant dependecies, as far as I know.  Let me know if you find
+something important to add.
+
+COPYRIGHT AND LICENCE
+
+Copyright 2003 Vlado Keselj www.cs.dal.ca/~vlado
+
+This script is provided "as is" without express or implied warranty.
+This is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.

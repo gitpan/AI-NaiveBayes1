@@ -1,0 +1,8 @@
+README
+MANIFEST
+Changes
+Makefile.PL
+NaiveBayes1.pm
+test.pl
+testfiles/test1.pl
+testfiles/test1.out
