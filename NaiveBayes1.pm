@@ -1,6 +1,6 @@
 # (c) 2003 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.2 2003/05/09 18:36:38 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.3 2003/05/09 18:58:55 vlado Exp $
 
 package AI::NaiveBayes1;
 
@@ -15,11 +15,11 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.2 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.3 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -116,7 +116,7 @@ sub predict {
   my $m = $self->{model};  # For convenience
   
   my %scores;
-  my @labels = keys(%{ $self->{stat_labels} });
+  my @labels = @{ $self->{labels} };
   $scores{$_} = $m->{labelprob}{$_} foreach (@labels);
   foreach my $att (keys(%{ $newattrs })) {
       die unless exists($self->{stat_attributes}{$att});
@@ -124,9 +124,10 @@ sub predict {
       die unless exists($self->{stat_attributes}{$att}{$attval});
       foreach my $label (@labels) {
 	  $scores{$label} *=
-	      $self->{stat_attributes}{$att}{$attval}{$label};
+	      $m->{condprob}{$att}{$attval}{$label};
       }
   }
+
   my $sumPx = 0.0;
   $sumPx += $scores{$_} foreach (keys(%scores));
   $scores{$_} /= $sumPx foreach (keys(%scores));
