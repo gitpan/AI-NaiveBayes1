@@ -1,6 +1,6 @@
-# (c) 2003-2005 Vlado Keselj www.cs.dal.ca/~vlado
+# (c) 2003-2007 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.17 2005/03/14 12:04:36 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.22 2007/12/07 11:26:25 vlado Exp $
 
 package AI::NaiveBayes1;
 use strict;
@@ -11,11 +11,11 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(new);
-our $VERSION = '1.2';
+our $VERSION = '1.3';
 
 use vars qw($Version $Revision);
 $Version = $VERSION;
-($Revision = substr(q$Revision: 1.17 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.22 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -32,6 +32,7 @@ sub new {
 		numof_instances => 0,
 		stat_labels => {},
 		stat_attributes => {},
+		smoothing => {},
 	       }, $package;
 }
 
@@ -53,6 +54,38 @@ sub import_from_YAML_file {
     my $self = YAML::LoadFile($yamlf);
     return $self;
 }
+
+# assume that the last header count means counts
+# after optionally removing counts, the last header is label
+sub add_table {
+    my $self = shift;
+    my @atts = (); my $lbl=''; my $cnt = '';
+    while (@_) {
+	my $table = shift;
+	if ($table =~ /^(.*)\n[ \t]*-+\n/) {
+	    my $a = $1; $table = $';
+	    $a =~ s/^\s+//; $a =~ s/\s+$//;
+	    if ($a =~ /\s*\bcount\s*$/) {
+		$a=$`; $cnt=1; } else { $cnt='' }
+	    @atts = split(/\s+/, $a);
+	    $lbl = pop @atts;
+	}
+	while ($table ne '') {
+	    $table =~ /^(.*)\n?/ or die;
+	    my $r=$1; $table = $';
+	    $r =~ s/^\s+//; $r=~ s/\s+$//;
+	    if ($r =~ /^-+$/) { next }
+	    my @v = split(/\s+/, $r);
+	    die "values (#=$#v): {@v}\natts (#=$#atts): @atts, lbl=$lbl,\n".
+                 "count: $cnt\n" unless $#v-($cnt?2:1) == $#atts;
+	    my %av=(); my @a = @atts;
+	    while (@a) { $av{shift @a} = shift(@v) }
+	    $self->add_instances(attributes=>\%av,
+				 label=>"$lbl=$v[0]",
+				 cases=>($cnt?$v[1]:1) );
+	}
+    }
+} # end of add_table
 
 sub add_instances {
   my ($self, %params) = @_;
@@ -107,17 +140,44 @@ sub train {
                                 $self->{numof_instances} } 
 
     $m->{condprob} = {};
+    $m->{condprobe} = {};
     foreach my $att (keys(%{$self->{stat_attributes}})) {
         next if $m->{real_attr}->{$att};
 	$m->{condprob}{$att} = {};
-	foreach my $attval (keys(%{$self->{stat_attributes}{$att}})) {
-	    $m->{condprob}{$att}{$attval} = {};
-	    foreach my $label (keys(%{$self->{stat_labels}})) {
-		my $a =
-		    exists($self->{stat_attributes}{$att}{$attval}{$label}) ?
-		    $self->{stat_attributes}{$att}{$attval}{$label} : 0;
-		$m->{condprob}{$att}{$attval}{$label} = $a / 
-		    $self->{stat_labels}{$label};
+	$m->{condprobe}{$att} = {};
+	foreach my $label (keys(%{$self->{stat_labels}})) {
+	    my $total = 0; my @attvals = ();
+	    foreach my $attval (keys(%{$self->{stat_attributes}{$att}})) {
+		next unless
+		    exists($self->{stat_attributes}{$att}{$attval}{$label}) and
+		    $self->{stat_attributes}{$att}{$attval}{$label} > 0;
+		push @attvals, $attval;
+		$m->{condprob}{$att}{$attval} = {} unless
+		    exists( $m->{condprob}{$att}{$attval} );
+		$m->{condprob}{$att}{$attval}{$label} = 
+		    $self->{stat_attributes}{$att}{$attval}{$label};
+		$m->{condprobe}{$att}{$attval} = {} unless
+		    exists( $m->{condprob}{$att}{$attval} );
+		$m->{condprobe}{$att}{$attval}{$label} = 
+		    $self->{stat_attributes}{$att}{$attval}{$label};
+		$total += $m->{condprob}{$att}{$attval}{$label};
+	    }
+	    if (exists($self->{smoothing}{$att}) and
+		$self->{smoothing}{$att} =~ /^unseen count=/) {
+		my $uc = $'; $uc = 0.5 if $uc <= 0;
+		if(! exists($m->{condprob}{$att}{'*'}) ) {
+		    $m->{condprob}{$att}{'*'} = {};
+		    $m->{condprobe}{$att}{'*'} = {};
+		}
+		$m->{condprob}{$att}{'*'}{$label} = $uc;
+		$total += $uc;
+		if (grep {$_ eq '*'} @attvals) { die }
+		push @attvals, '*';
+	    }
+	    foreach my $attval (@attvals) {
+		$m->{condprobe}{$att}{$attval}{$label} =
+		    "(= $m->{condprob}{$att}{$attval}{$label} / $total)";
+		$m->{condprob}{$att}{$attval}{$label} /= $total;
 	    }
 	}
     }
@@ -174,10 +234,19 @@ sub predict {
       next if defined $m->{real_attr}->{$att};
       die unless exists($self->{stat_attributes}{$att});
       my $attval = $newattrs->{$att};
-      die unless exists($self->{stat_attributes}{$att}{$attval});
+      die unless exists($self->{stat_attributes}{$att}{$attval}) or
+	  exists($self->{smoothing}{$att});
       foreach my $label (@labels) {
-	  $scores{$label} *=
-	      $m->{condprob}{$att}{$attval}{$label};
+	  if (exists($m->{condprob}{$att}{$attval}) and
+	      exists($m->{condprob}{$att}{$attval}{$label}) and
+	      $m->{condprob}{$att}{$attval}{$label} > 0 ) {
+	      $scores{$label} *=
+		  $m->{condprob}{$att}{$attval}{$label};
+	  } elsif (exists($self->{smoothing}{$att})) {
+	      $scores{$label} *=
+                  $m->{condprob}{$att}{'*'}{$label};
+	  } else { $scores{$label} = 0 }
+
       }
   }
 
@@ -204,6 +273,9 @@ sub predict {
 
 sub print_model {
     my $self = shift;
+    my $withcounts = '';
+    if ($#_>-1 && $_[0] eq 'with counts')
+    { shift @_; $withcounts = 1; }
     my $m = $self->{model};
     my @labels = $self->labels;
     my $r;
@@ -217,7 +289,12 @@ sub print_model {
     $lines[1] = substr($lines[1],0,length($lines[1])-2).'+-';
     $lines[0] .= "P(category) ";
     foreach my $i (2..$#lines) {
-	$lines[$i] .= $m->{labelprob}{$labels[$i-2]} .' ';
+	my $label = $labels[$i-2];
+	$lines[$i] .= $m->{labelprob}{$label} .' ';
+	if ($withcounts) {
+	    $lines[$i] .= "(= $self->{stat_labels}{$label} / ".
+		"$self->{numof_instances} ) ";
+	}
     }
     @lines = _append_lines(@lines);
 
@@ -229,14 +306,19 @@ sub print_model {
 	@lines = ( "category ", '-' );
 	my @lines1 = ( "$att ", '-' );
 	my @lines2 = ( "P( $att | category ) ", '-' );
-	my @attvals = sort keys(%{ $self->{stat_attributes}{$att} });
+	my @attvals = sort keys(%{ $m->{condprob}{$att} });
 	foreach my $label (@labels) {
 	    if (! exists($m->{real_attr}->{$att})) {
 		foreach my $attval (@attvals) {
+		    next unless exists($m->{condprob}{$att}{$attval}{$label});
 		    push @lines, "$label ";
 		    push @lines1, "$attval ";
-		    push @lines2, $m->{condprob}{$att}{$attval}{$label}
-		    ." ";
+
+		    my $line = $m->{condprob}{$att}{$attval}{$label};
+		    if ($withcounts)
+		    { $line.= ' '.$m->{condprobe}{$att}{$attval}{$label} }
+		    $line .= ' ';
+		    push @lines2, $line;
 		}
 	    } else {
 		push @lines, "$label ";
@@ -245,16 +327,17 @@ sub print_model {
 		    $m->{real_stat}{$att}{$label}{mean}.",stddev=".
 		    $m->{real_stat}{$att}{$label}{stddev}.") ";
 	    }
+	    push @lines, '-'; push @lines1, '-'; push @lines2, '-';
 	}
 	@lines = _append_lines(@lines);
 	foreach my $i (0 .. $#lines)
-	{ $lines[$i] .= ($i==1?'+-':'| ') . $lines1[$i] }
+	{ $lines[$i] .= ($lines[$i]=~/-$/?'+-':'| ') . $lines1[$i] }
 	@lines = _append_lines(@lines);
 	foreach my $i (0 .. $#lines)
-	{ $lines[$i] .= ($i==1?'+-':'| ') . $lines2[$i] }
+	{ $lines[$i] .= ($lines[$i]=~/-$/?'+-':'| ') . $lines2[$i] }
 	@lines = _append_lines(@lines);
 
-	$r .= join("\n", @lines). "\n". $lines[1]. "\n\n";
+	$r .= join("\n", @lines). "\n\n";
     }
 
     return $r;
@@ -304,7 +387,32 @@ AI::NaiveBayes1 - Bayesian prediction of categories
 
   use AI::NaiveBayes1;
   my $nb = AI::NaiveBayes1->new;
+  $nb->add_table(
+  "Html  Caps  Free  Spam  count
+  -------------------------------
+     Y     Y     Y     Y    42   
+     Y     Y     Y     N    32   
+     Y     Y     N     Y    17   
+     Y     Y     N     N     7   
+     Y     N     Y     Y    32   
+     Y     N     Y     N    12   
+     Y     N     N     Y    20   
+     Y     N     N     N    16   
+     N     Y     Y     Y    38   
+     N     Y     Y     N    18   
+     N     Y     N     Y    16   
+     N     Y     N     N    16   
+     N     N     Y     Y     2   
+     N     N     Y     N     9   
+     N     N     N     Y    11   
+     N     N     N     N    91   
+  -------------------------------
+  ");
+  $nb->train;
+  print "Model:\n" . $nb->print_model;
+  print "Model (with counts):\n" . $nb->print_model('with counts');
 
+  $nb = AI::NaiveBayes1->new;
   $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=Y',cases=>30);
   $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=N',cases=>10);
   $nb->add_instances(attributes=>{model=>'H',place=>'N'},label=>'repairs=Y',cases=>18);
@@ -344,6 +452,19 @@ See Examples for more examples.
 
 This module implements the classic "Naive Bayes" machine learning
 algorithm.
+
+Attribute Smoothing
+
+For an attribute A one can specify:
+
+    $nb->{smoothing}{A} = 'unseen count=0.5';
+
+to provide a count for unseen data.  The count is taken into
+consideration in training and prediction, when any unseen attribute
+values are observed.  Zero probabilities can be prevented in this way.
+A count other than 0.5 can be provided, but if it is <=0 it will be
+set to 0.5.  The method is similar to add-one smoothing.  A special
+attribute value '*' is used for all unseen data. 
 
 =head1 METHODS
 
@@ -395,10 +516,12 @@ object.  Requires YAML module.
 Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
 object to a file.  Requires YAML module.
 
-=item print_model()
+=item print_model( OPTIONAL 'with counts' )
 
 Returns a string, human-friendly representation of the model.
 The model is supposed to be trained before calling this method.
+One argument 'with counts' can be supplied, in which case explanatory
+expressions with counts are printed as well.
 
 =item train()
 
@@ -549,7 +672,7 @@ and Andrew Brian Clegg.
 
 =head1 AUTHOR
 
-Copyright 2003-2005 Vlado Keselj http://www.cs.dal.ca/~vlado.
+Copyright 2003-2007 Vlado Keselj http://www.cs.dal.ca/~vlado.
 In 2004 Yung-chung Lin provided implementation of the Gaussian model for
 continous variables.
 

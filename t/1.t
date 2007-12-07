@@ -19,7 +19,7 @@ $nb->add_instances(attributes=>{model=>'T',place=>'N'},label=>'repairs=N',cases=
 $nb->train;
 
 my $printedmodel =  "Model:\n" . $nb->print_model;
-
+#putfile('t/1-1.out', $printedmodel);
 is($printedmodel, getfile('t/1-1.out'));
 
 #putfile('t/1-2.out', $nb->export_to_YAML());
