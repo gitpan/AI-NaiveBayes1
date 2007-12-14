@@ -1,21 +1,15 @@
 # (c) 2003-2007 Vlado Keselj www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.22 2007/12/07 11:26:25 vlado Exp $
+# $Id: NaiveBayes1.pm,v 1.26 2007/12/14 15:43:40 vlado Exp $
 
 package AI::NaiveBayes1;
 use strict;
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS); # Exporter vars
-our @ISA = qw(Exporter);
-
-our %EXPORT_TAGS = ( 'all' => [ qw() ] );
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-our @EXPORT = qw(new);
-our $VERSION = '1.3';
-
+@EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION;
-($Revision = substr(q$Revision: 1.22 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '1.4';
+($Revision = substr(q$Revision: 1.26 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 

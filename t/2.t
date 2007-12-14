@@ -67,6 +67,9 @@ is($printedmodel, getfile('t/2-1.out'));
 #putfile('t/2-2.out', $nb->export_to_YAML());
 #is($nb->export_to_YAML(), getfile('t/2-2.out'));
 
+eval "require YAML;";
+plan skip_all => "YAML module required for the remaining tests in 2.t" if $@;
+
 $nb->export_to_YAML_file('t/tmp1');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
 is("Model:\n" . $nb1->print_model, getfile('t/2-1.out'));

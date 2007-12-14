@@ -28,3 +28,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 	- fixed some warnings reported during testing
 	- added option "with counts" to print_model
 	- added smoothing option for attributes
+
+1.4   Fri Dec 14 11:42:16 AST 2007
+	- added test skipping if YAML module is not available
+	- removing deprecated "our" reserved word

@@ -45,6 +45,9 @@ my $printedmodel =  "Model:\n" . $nb->print_model('with counts');
 putfile('t/8-1.out', $printedmodel);
 is($printedmodel, getfile('t/8-1.out'));
 
+eval "require YAML;";
+plan skip_all => "YAML module required for the remaining tests in 8.t" if $@;
+
 use YAML;
 
 # duck ducks fly flies

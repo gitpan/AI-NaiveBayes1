@@ -3,6 +3,7 @@ MANIFEST
 Changes
 Makefile.PL
 NaiveBayes1.pm
+META.yml
 t/1.t
 t/1-1.out
 t/1-2.out
@@ -34,4 +35,3 @@ t/7-1.out
 t/7-2.out
 t/8.t
 t/8-1.out
-META.yml                                 Module meta-data (added by MakeMaker)
