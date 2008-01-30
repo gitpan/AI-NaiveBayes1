@@ -19,8 +19,10 @@ $nb->add_instances(attributes=>{model=>'T',place=>'N'},label=>'repairs=N',cases=
 $nb->train;
 
 my $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 #putfile('t/1-1.out', $printedmodel);
-is($printedmodel, getfile('t/1-1.out'));
+#is($printedmodel, getfile('t/1-1.out'));
+&compare_by_line($printedmodel, 't/1-1.out');
 
 #putfile('t/1-2.out', $nb->export_to_YAML());
 #is($nb->export_to_YAML(), getfile('t/1-2.out'));
@@ -32,8 +34,10 @@ $nb->export_to_YAML_file('t/tmp1');
 
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
 
-is("Model:\n" . $nb1->print_model, getfile('t/1-1.out'));
+$printedmodel = &shorterdecimals($nb1->print_model);
+is("Model:\n" . $printedmodel, getfile('t/1-1.out'));
 
 my $tmp = $nb->export_to_YAML();
 my $nb2 = AI::NaiveBayes1->import_from_YAML($tmp);
-is("Model:\n" . $nb2->print_model, getfile('t/1-1.out'));
+$printedmodel = &shorterdecimals($nb2->print_model);
+is("Model:\n" . $printedmodel, getfile('t/1-1.out'));

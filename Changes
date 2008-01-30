@@ -32,3 +32,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 1.4   Fri Dec 14 11:42:16 AST 2007
 	- added test skipping if YAML module is not available
 	- removing deprecated "our" reserved word
+
+1.5   Wed Jan 30 08:06:22 AST 2008
+	- fixed testing problems due to differences in the lowest
+	  significant digit on different platforms

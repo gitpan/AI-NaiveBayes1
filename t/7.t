@@ -98,6 +98,7 @@ $nb->add_table(
 ");
 $nb->train;
 $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 #putfile('t/7-1.out', $printedmodel);
 is($printedmodel, getfile('t/7-1.out'));
 
