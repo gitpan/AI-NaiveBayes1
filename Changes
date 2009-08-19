@@ -36,3 +36,8 @@ Revision history for Perl extension AI::NaiveBayes1.
 1.5   Wed Jan 30 08:06:22 AST 2008
 	- fixed testing problems due to differences in the lowest
 	  significant digit on different platforms
+
+1.6
+        - improved an error message
+	- fixed some testing problems due to whitespace
+	- small improvement in generating documentation

@@ -1,6 +1,6 @@
-# (c) 2003-8 Vlado Keselj http://www.cs.dal.ca/~vlado
+# (c) 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm,v 1.27 2008/01/30 12:07:42 vlado Exp $
+# $Id: NaiveBayes1.pm 34 2009-08-19 12:07:03Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
@@ -8,8 +8,8 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS); # Exporter vars
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '1.5';
-($Revision = substr(q$Revision: 1.27 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '1.6';
+($Revision = substr(q$Revision: 1.28 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -228,7 +228,8 @@ sub predict {
       next if defined $m->{real_attr}->{$att};
       die unless exists($self->{stat_attributes}{$att});
       my $attval = $newattrs->{$att};
-      die unless exists($self->{stat_attributes}{$att}{$attval}) or
+      die "Unknown value `$attval' for attribute `$att'."
+      unless exists($self->{stat_attributes}{$att}{$attval}) or
 	  exists($self->{smoothing}{$att});
       foreach my $label (@labels) {
 	  if (exists($m->{condprob}{$att}{$attval}) and
@@ -562,13 +563,13 @@ Gaussian (normal) distribution for each possible value of C=c,  Hence,
 for each C=c we collect the mean value (m) and standard deviation (s)
 for A during training.  During classification, P(A=a|C=c) is estimated
 using Gaussian distribution, i.e., in the following way:
-                                                                                                                              
+
                     1               (a-m)^2
  P(A=a|C=c) = ------------ * exp( - ------- )
               sqrt(2*Pi)*s           2*s^2
-                                                                                                                              
+
 this boils down to the following lines of code:
-                                                                                                                              
+
     $scores{$label} *=
     0.398942280401433 / $m->{real_stat}{$att}{$label}{stddev}*
       exp( -0.5 *
@@ -577,7 +578,7 @@ this boils down to the following lines of code:
              / $m->{real_stat}{$att}{$label}{stddev}
            ) ** 2
 	   );
-                                                                                                                              
+
 i.e.,
                                                                                                                               
   P(A=a|C=c) = 0.398942280401433 / s *
@@ -666,7 +667,7 @@ and Andrew Brian Clegg.
 
 =head1 AUTHOR
 
-Copyright 2003-8 Vlado Keselj http://www.cs.dal.ca/~vlado.
+Copyright 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado.
 In 2004 Yung-chung Lin provided implementation of the Gaussian model for
 continous variables.
 

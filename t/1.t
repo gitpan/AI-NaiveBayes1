@@ -35,9 +35,11 @@ $nb->export_to_YAML_file('t/tmp1');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
 
 $printedmodel = &shorterdecimals($nb1->print_model);
-is("Model:\n" . $printedmodel, getfile('t/1-1.out'));
+#is("Model:\n" . $printedmodel, getfile('t/1-1.out'));
+&compare_by_line("Model:\n" . $printedmodel, 't/1-1.out');
 
 my $tmp = $nb->export_to_YAML();
 my $nb2 = AI::NaiveBayes1->import_from_YAML($tmp);
 $printedmodel = &shorterdecimals($nb2->print_model);
-is("Model:\n" . $printedmodel, getfile('t/1-1.out'));
+#is("Model:\n" . $printedmodel, getfile('t/1-1.out'));
+&compare_by_line("Model:\n" . $printedmodel, 't/1-1.out');

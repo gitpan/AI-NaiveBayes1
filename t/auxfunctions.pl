@@ -5,16 +5,18 @@ sub compare_by_line {
     my $file = shift;
     my $expected = getfile($file);
     if ($got eq $expected) { pass; return }
-    print STDERR "Failed comparison with $file!\n";
+    my $flag = '';
     while ($got ne '' or $expected ne '') {
-	$got =~ /^.*\n?/;      my $a = $&; $got = $';
-	$expected =~ /^.*\n?/; my $b = $&; $expected = $';
+	my $a=$got;      if ($a =~ /\s*\n/) { $a = $`; $got = $'; }
+	my $b=$expected; if ($b =~ /\s*\n/) { $b = $`; $expected = $'; }
 	if ($a ne $b) {
-	    print STDERR "     Got: $a".
-                 	 "Expected: $b";
+	    if ($flag eq '')
+	    { print STDERR "Failed comparison with $file!\n"; $flag = 1; }
+	    print STDERR "     Got: $a\n".
+                 	 "Expected: $b\n";
 	}
     }
-    fail;
+    if ($flag eq '') { pass } else { fail }
 }
 
 sub shorterdecimals {
