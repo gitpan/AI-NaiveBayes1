@@ -37,7 +37,13 @@ Revision history for Perl extension AI::NaiveBayes1.
 	- fixed testing problems due to differences in the lowest
 	  significant digit on different platforms
 
-1.6
+1.6   Wed Aug 19 09:09:57 ADT 2009
         - improved an error message
 	- fixed some testing problems due to whitespace
 	- small improvement in generating documentation
+
+1.7   Thu Aug 20 14:20:15 ADT 2009
+	- improvements in documentation
+	- added method add_csv_file
+	- added method drop_attributes
+	- removed real_attr and added attribute_type field

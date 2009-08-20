@@ -1,4 +1,8 @@
 --- !!perl/hash:AI::NaiveBayes1
+attribute_type:
+  html: nominal
+  morning: nominal
+  size: real
 attributes:
   - morning
   - html
@@ -69,8 +73,6 @@ model:
   labelprob:
     spam=N: 0.15
     spam=Y: 0.85
-  real_attr: &1
-    size: 1
   real_stat:
     size:
       spam=N:
@@ -84,7 +86,6 @@ model:
         stddev: 1397.40106721265
         sum: 39859
 numof_instances: 20
-real_attr: *1
 real_stat: {}
 smoothing: {}
 stat_attributes:

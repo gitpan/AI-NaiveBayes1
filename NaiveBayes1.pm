@@ -1,15 +1,15 @@
 # (c) 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm 34 2009-08-19 12:07:03Z vlado $
+# $Id: NaiveBayes1.pm 39 2009-08-20 17:20:31Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
 require Exporter;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS); # Exporter vars
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '1.6';
-($Revision = substr(q$Revision: 1.28 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '1.7';
+($Revision = substr(q$Revision: 39 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -22,17 +22,18 @@ sub new {
                 attributes => [ ],
 		labels     => [ ],
 		attvals    => {},
-		real_stat => {}, # statistics
+		real_stat  => {},
 		numof_instances => 0,
 		stat_labels => {},
 		stat_attributes => {},
 		smoothing => {},
+		attribute_type => {},
 	       }, $package;
 }
 
 sub set_real {
     my ($self, @attr) = @_;
-    %{$self->{real_attr}} = map{$_=>1} @attr;
+    foreach my $a (@attr) { $self->{attribute_type}{$a} = 'real' }
 }
 
 sub import_from_YAML {
@@ -81,6 +82,40 @@ sub add_table {
     }
 } # end of add_table
 
+# Simplified; not generally compatible.
+# Assume that the last header is label.  The first row contains
+# attribute names.
+sub add_csv_file {
+    my $self = shift; my $fn = shift; local *F;
+    open(F,$fn) or die "Cannot open CSV file `$fn': $!";
+    local $_ = <F>; my @atts = (); my $lbl=''; my $cnt = '';
+    chomp; @atts = split(/\s*,\s*/, $_); $lbl = pop @atts;
+    while (<F>) {
+	chomp; my @v = split(/\s*,\s*/, $_);
+	die "values (#=$#v): {@v}\natts (#=$#atts): @atts, lbl=$lbl,\n".
+	    "count: $cnt\n" unless $#v-($cnt?2:1) == $#atts;
+	my %av=(); my @a = @atts;
+	while (@a) { $av{shift @a} = shift(@v) }
+	$self->add_instances(attributes=>\%av,
+			     label=>"$lbl=$v[0]",
+			     cases=>($cnt?$v[1]:1) );
+    }
+    close(F);
+} # end of add_csv_file
+
+sub drop_attributes {
+    my $self = shift;
+    foreach my $a (@_) {
+	my @tmp = grep { $a ne $_ } @{ $self->{attributes} };
+	$self->{attributes} = \@tmp;
+	delete($self->{attvals}{$a});
+	delete($self->{stat_attributes}{$a});
+	delete($self->{attribute_type}{$a});
+	delete($self->{real_stat}{$a});
+	delete($self->{smoothing}{$a});
+    }
+} # end of drop_attributes
+
 sub add_instances {
   my ($self, %params) = @_;
   for ('attributes', 'label', 'cases') {
@@ -92,6 +127,7 @@ sub add_instances {
 	  $self->{stat_attributes}{$a} = {};
 	  push @{ $self->{attributes} }, $a;
 	  $self->{attvals}{$a} = [ ];
+	  $self->{attribute_type}{$a} = 'nominal' unless defined($self->{attribute_type}{$a});
       }
   } else {
       foreach my $a (keys(%{$self->{stat_attributes}}))
@@ -126,7 +162,6 @@ sub add_instance {
 sub train {
     my $self = shift;
     my $m = $self->{model} = {};
-    $m->{real_attr} = $self->{real_attr};
     
     $m->{labelprob} = {};
     foreach my $label (keys(%{$self->{stat_labels}}))
@@ -136,7 +171,7 @@ sub train {
     $m->{condprob} = {};
     $m->{condprobe} = {};
     foreach my $att (keys(%{$self->{stat_attributes}})) {
-        next if $m->{real_attr}->{$att};
+        next if $self->{attribute_type}{$att} eq 'real';
 	$m->{condprob}{$att} = {};
 	$m->{condprobe}{$att} = {};
 	foreach my $label (keys(%{$self->{stat_labels}})) {
@@ -178,7 +213,10 @@ sub train {
 
     # For real-valued attributes, we use Gaussian distribution
     # let us collect statistics
-    foreach my $att (keys %{$m->{real_attr}}) {
+    foreach my $att (keys(%{$self->{stat_attributes}})) {
+        next unless $self->{attribute_type}{$att} eq 'real';
+	print STDERR "Smoothing ignored for real attribute $att!\n" if
+	    defined($self->{smoothing}{att}) and $self->{smoothing}{att};
         $m->{real_stat}->{$att} = {};
         foreach my $attval (keys %{$self->{stat_attributes}{$att}}){
             foreach my $label (keys %{$self->{stat_attributes}{$att}{$attval}}){
@@ -225,7 +263,8 @@ sub predict {
   my @labels = @{ $self->{labels} };
   $scores{$_} = $m->{labelprob}{$_} foreach (@labels);
   foreach my $att (keys(%{ $newattrs })) {
-      next if defined $m->{real_attr}->{$att};
+      if (!defined($self->{attribute_type}{$att})) { die "Unknown attribute: `$att'" }
+      next if $self->{attribute_type}{$att} eq 'real';
       die unless exists($self->{stat_attributes}{$att});
       my $attval = $newattrs->{$att};
       die "Unknown value `$attval' for attribute `$att'."
@@ -246,10 +285,11 @@ sub predict {
   }
 
   foreach my $att (keys %{$newattrs}){
-      next unless defined $m->{real_attr}->{$att};
+      next unless $self->{attribute_type}{$att} eq 'real';
+      my $sum=0; my %nscores;
       foreach my $label (@labels) {
 	  die unless exists $m->{real_stat}{$att}{$label}{mean};
-	  $scores{$label} *=
+	  $nscores{$label} =
               0.398942280401433 / $m->{real_stat}{$att}{$label}{stddev}*
               exp( -0.5 *
                   ( ( $newattrs->{$att} -
@@ -257,6 +297,11 @@ sub predict {
                     / $m->{real_stat}{$att}{$label}{stddev}
                   ) ** 2
 		 );
+	  $sum += $nscores{$label};
+      }
+      if ($sum==0) { print STDERR "Ignoring all Gaussian probabilities: all=0!\n" }
+      else {
+	  foreach my $label (@labels) { $scores{$label} *= $nscores{$label} }
       }
   }
 
@@ -303,7 +348,7 @@ sub print_model {
 	my @lines2 = ( "P( $att | category ) ", '-' );
 	my @attvals = sort keys(%{ $m->{condprob}{$att} });
 	foreach my $label (@labels) {
-	    if (! exists($m->{real_attr}->{$att})) {
+	    if ( $self->{attribute_type}{$att} ne 'real' ) {
 		foreach my $attval (@attvals) {
 		    next unless exists($m->{condprob}{$att}{$attval}{$label});
 		    push @lines, "$label ";
@@ -376,7 +421,7 @@ __END__
 
 =head1 NAME
 
-AI::NaiveBayes1 - Bayesian prediction of categories
+AI::NaiveBayes1 - Naive Bayes Classification
 
 =head1 SYNOPSIS
 
@@ -408,14 +453,22 @@ AI::NaiveBayes1 - Bayesian prediction of categories
   print "Model (with counts):\n" . $nb->print_model('with counts');
 
   $nb = AI::NaiveBayes1->new;
-  $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=Y',cases=>30);
-  $nb->add_instances(attributes=>{model=>'H',place=>'B'},label=>'repairs=N',cases=>10);
-  $nb->add_instances(attributes=>{model=>'H',place=>'N'},label=>'repairs=Y',cases=>18);
-  $nb->add_instances(attributes=>{model=>'H',place=>'N'},label=>'repairs=N',cases=>16);
-  $nb->add_instances(attributes=>{model=>'T',place=>'B'},label=>'repairs=Y',cases=>22);
-  $nb->add_instances(attributes=>{model=>'T',place=>'B'},label=>'repairs=N',cases=>14);
-  $nb->add_instances(attributes=>{model=>'T',place=>'N'},label=>'repairs=Y',cases=> 6);
-  $nb->add_instances(attributes=>{model=>'T',place=>'N'},label=>'repairs=N',cases=>84);
+  $nb->add_instances(attributes=>{model=>'H',place=>'B'},
+		     label=>'repairs=Y',cases=>30);
+  $nb->add_instances(attributes=>{model=>'H',place=>'B'},
+		     label=>'repairs=N',cases=>10);
+  $nb->add_instances(attributes=>{model=>'H',place=>'N'},
+		     label=>'repairs=Y',cases=>18);
+  $nb->add_instances(attributes=>{model=>'H',place=>'N'},
+		     label=>'repairs=N',cases=>16);
+  $nb->add_instances(attributes=>{model=>'T',place=>'B'},
+		     label=>'repairs=Y',cases=>22);
+  $nb->add_instances(attributes=>{model=>'T',place=>'B'},
+		     label=>'repairs=N',cases=>14);
+  $nb->add_instances(attributes=>{model=>'T',place=>'N'},
+		     label=>'repairs=Y',cases=> 6);
+  $nb->add_instances(attributes=>{model=>'T',place=>'N'},
+		     label=>'repairs=N',cases=>84);
 
   $nb->train;
 
@@ -448,7 +501,54 @@ See Examples for more examples.
 This module implements the classic "Naive Bayes" machine learning
 algorithm.
 
-Attribute Smoothing
+=head2 Data Structure
+
+An object contains the following fields:
+
+=over 4
+
+=item C<{attributes}>
+
+List of attribute names.
+
+=item C<{attribute_type}{$a}>
+
+Attribute types - 'real', or not (e.g., 'nominal')
+
+=item C<{labels}>
+
+List of labels.
+
+=item C<{attvals}{$a}>
+
+List of attribute values
+
+=item C<{real_stat}{$a}{$v}{$l}{sum}>
+
+Statistics for real valued attributes; besides 'sum' also: count, mean, stddev
+
+=item C<{numof_instances}>
+
+Number of training instances.
+
+=item C<{stat_labels}{$l}>
+
+Label count in training data.
+
+=item C<{stat_attributes}{$a}>
+
+Statistics for an attribute: C<...{$value}{$label}> = count of
+instances.
+
+=item C<{smoothing}{$attribute}>
+
+Attribute smoothing.  No smoothing if does not exist.  Implemented smoothing:
+
+      - /^unseen count=/ followed by number, e.g., 0.5
+
+=back
+
+=head2 Attribute Smoothing
 
 For an attribute A one can specify:
 
@@ -469,29 +569,42 @@ attribute value '*' is used for all unseen data.
 
 =item new()
 
-Creates a new C<AI::NaiveBayes1> object and returns it.
+Constructor. Creates a new C<AI::NaiveBayes1> object and returns it.
+
+=item import_from_YAML($string)
+
+Constructor. Creates a new C<AI::NaiveBayes1> object from a string where it is
+represented in C<YAML>.  Requires YAML module.
+
+=item import_from_YAML_file($file_name)
+
+Constructor. Creates a new C<AI::NaiveBayes1> object from a file where it is
+represented in C<YAML>.  Requires YAML module.
+
+=head2 Non-Constructor Methods
+
+=item add_table()
+
+Add instances from a table.  The first row are attributes, followed by
+values.  If the name of the last attribute is `count', it is
+interpreted as a repetition count and used appropriatelly.  The last
+attribute (after optionally removing `count') is the class attribute.
+The attributes and values are separated by white space.
+
+=item add_csv_file($filename)
+
+Add instances from a CSV file.  Primitive format implementation (e.g.,
+no commas allowed in attribute names or values).
+
+=item drop_attributes(@attributes)
+
+Delete attributes after adding instances.
 
 =item set_real(list_of_attributes)
 
 Delares a list of attributes to be real-valued.  During training,
 their conditional probabilities will be modeled with Gaussian (normal)
 distributions. 
-
-=item import_from_YAML($string)
-
-Creates a new C<AI::NaiveBayes1> object from a string where it is
-represented in C<YAML>.  Requires YAML module.
-
-=item import_from_YAML_file($file_name)
-
-Creates a new C<AI::NaiveBayes1> object from a file where it is
-represented in C<YAML>.  Requires YAML module.
-
-=back
-
-=head2 Methods
-
-=over 4
 
 =item C<add_instance(attributes=E<gt>HASH,label=E<gt>STRING|ARRAY)>
 
@@ -511,7 +624,7 @@ object.  Requires YAML module.
 Writes a C<YAML> string representation of an C<AI::NaiveBayes1>
 object to a file.  Requires YAML module.
 
-=item print_model( OPTIONAL 'with counts' )
+=item C<print_model( OPTIONAL 'with counts' )>
 
 Returns a string, human-friendly representation of the model.
 The model is supposed to be trained before calling this method.
@@ -654,6 +767,8 @@ I would like to thank Yung-chung Lin (xern@ cpan. org) for his
 implementation of the Gaussian model for continuous variables,
 and the following people for bug reports, support, and comments (in
 a random order):
+
+Michael Stevens
 
 Tom Dyson
 

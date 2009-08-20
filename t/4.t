@@ -57,7 +57,8 @@ $nb->train;
 my $printedmodel =  "Model:\n" . $nb->print_model;
 
 #putfile('t/4-1.out', $printedmodel);
-is($printedmodel, getfile('t/4-1.out'));
+#is($printedmodel, getfile('t/4-1.out'));
+&compare_by_line($printedmodel, 't/4-1.out');
 
 #putfile('t/4-2.out', $nb->export_to_YAML());
 #is($nb->export_to_YAML(), getfile('t/4-2.out'));
