@@ -47,3 +47,6 @@ Revision history for Perl extension AI::NaiveBayes1.
 	- added method add_csv_file
 	- added method drop_attributes
 	- removed real_attr and added attribute_type field
+
+1.8   Fri Aug 21 06:36:34 ADT 2009
+	- fixed a pod documentation error

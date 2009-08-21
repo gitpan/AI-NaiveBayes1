@@ -1,6 +1,6 @@
 # (c) 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm 39 2009-08-20 17:20:31Z vlado $
+# $Id: NaiveBayes1.pm 42 2009-08-21 09:37:00Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
@@ -8,8 +8,8 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '1.7';
-($Revision = substr(q$Revision: 39 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '1.8';
+($Revision = substr(q$Revision: 42 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -581,7 +581,11 @@ represented in C<YAML>.  Requires YAML module.
 Constructor. Creates a new C<AI::NaiveBayes1> object from a file where it is
 represented in C<YAML>.  Requires YAML module.
 
+=back
+
 =head2 Non-Constructor Methods
+
+=over 4
 
 =item add_table()
 
