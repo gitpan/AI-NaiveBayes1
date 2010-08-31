@@ -1,6 +1,6 @@
 <? read_starfish_conf();echo "AI/NaiveBayes1 version $ModuleVersion\n".'='x26!>
 #+
-AI/NaiveBayes1 version 1.8
+AI/NaiveBayes1 version 1.9
 ==========================
 #-
 
