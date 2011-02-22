@@ -3,6 +3,8 @@
 sub compare_by_line {
     my $got = shift;
     my $file = shift;
+    my $testfile = @_ ? shift @_ : '';
+    my $testline = @_ ? shift @_ : '';
     my $expected = getfile($file);
     if ($got eq $expected) { pass; return }
     my $flag = '';
@@ -11,7 +13,7 @@ sub compare_by_line {
 	my $b=$expected; if ($b =~ /\s*\n/) { $b = $`; $expected = $'; }
 	if ($a ne $b) {
 	    if ($flag eq '')
-	    { print STDERR "Failed comparison with $file!\n"; $flag = 1; }
+	    { print STDERR "$testfile:$testline: Failed comparison with $file!\n"; $flag = 1; }
 	    print STDERR "     Got: $a\n".
                  	 "Expected: $b\n";
 	}
@@ -22,6 +24,7 @@ sub compare_by_line {
 sub shorterdecimals {
     local $_ = shift;
     s/(\.\d{14})\d+/$1/g;
+    s/---+/---/g;
     return $_;
 }
 

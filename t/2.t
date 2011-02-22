@@ -63,7 +63,7 @@ my $printedmodel =  "Model:\n" . $nb->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
 #putfile('t/2-1.out', $printedmodel);
 #is($printedmodel, getfile('t/2-1.out'));
-&compare_by_line($printedmodel, 't/2-1.out');
+&compare_by_line($printedmodel, 't/2-1.out', __FILE__ , __LINE__);
 
 #putfile('t/2-2.out', $nb->export_to_YAML());
 #is($nb->export_to_YAML(), getfile('t/2-2.out'));
@@ -75,14 +75,14 @@ $nb->export_to_YAML_file('t/tmp1');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
 $printedmodel = "Model:\n" . $nb1->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
-&compare_by_line($printedmodel, 't/2-1.out');
+&compare_by_line($printedmodel, 't/2-1.out', __FILE__ , __LINE__);
 #is("Model:\n" . $nb1->print_model, getfile('t/2-1.out'));
 
 my $tmp = $nb->export_to_YAML();
 my $nb2 = AI::NaiveBayes1->import_from_YAML($tmp);
 $printedmodel = "Model:\n" . $nb2->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
-&compare_by_line($printedmodel, 't/2-1.out');
+&compare_by_line($printedmodel, 't/2-1.out', __FILE__ , __LINE__);
 #is("Model:\n" . $nb2->print_model, getfile('t/2-1.out'));
 
 my $p = $nb->predict(attributes=>{morning=>'Y',html=>'Y',size1=>'L'});

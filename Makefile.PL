@@ -19,7 +19,7 @@ WriteMakefile
   'PL_FILES' => {},
   ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
    (ABSTRACT_FROM => $name, # retrieve abstract from module
-    AUTHOR     => 'Vlado Keselj http://www.cs.dal.ca/~vlado') : 
+    AUTHOR     => 'Vlado Keselj http://web.cs.dal.ca/~vlado') : 
    ()
    ),
   ($ExtUtils::MakeMaker::VERSION ge '6.30_00'? 

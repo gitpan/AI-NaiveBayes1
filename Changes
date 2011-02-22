@@ -54,3 +54,9 @@ Revision history for Perl extension AI::NaiveBayes1.
 1.9   Tue Aug 31 09:27:51 ADT 2010
 	- fixed testing problems due to differences in precision in
 	  t/2.t
+
+1.10  Tue Feb 22 09:31:12 AST 2011
+	- fixed testing problems due to differences in precision
+	- fixed podchecker warning (some space)
+	- better test error reporting in 2.t
+	- added t/pod.t, thanks to Michael Stevens

@@ -1,6 +1,6 @@
-# (c) 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado
+# (c) 2003-11 Vlado Keselj http://web.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm 43 2009-08-21 09:41:23Z vlado $
+# $Id: NaiveBayes1.pm 315 2011-02-22 13:46:06Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
@@ -8,8 +8,8 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '1.9';
-($Revision = substr(q$Revision: 43 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '1.10';
+($Revision = substr(q$Revision: 315 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -697,7 +697,7 @@ this boils down to the following lines of code:
 	   );
 
 i.e.,
-                                                                                                                              
+
   P(A=a|C=c) = 0.398942280401433 / s *
     exp( -0.5 * ( ( a-m ) / s ) ** 2 );
 
@@ -778,7 +778,8 @@ Tom Dyson
 
 Dan Von Kohorn
 
-CPAN-testers (jlatour, Jost.Krieger, tvmaly, Matthew Musgrove)
+CPAN-testers: Andreas Koenig, Alexandr Ciornii, jlatour, Jost.Krieger,
+tvmaly, Matthew Musgrove, Michael Stevens
 
 Craig Talbert
 
@@ -786,7 +787,7 @@ and Andrew Brian Clegg.
 
 =head1 AUTHOR
 
-Copyright 2003-9 Vlado Keselj http://www.cs.dal.ca/~vlado.
+Copyright 2003-11 Vlado Keselj http://www.cs.dal.ca/~vlado.
 In 2004 Yung-chung Lin provided implementation of the Gaussian model for
 continous variables.
 
@@ -795,7 +796,7 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 The module is available on CPAN (F<http://search.cpan.org/~vlado>), and
-F<http://www.cs.dal.ca/~vlado/srcperl/>.  The latter site is
+F<http://web.cs.dal.ca/~vlado/srcperl/>.  The latter site is
 updated more frequently.
 
 =head1 SEE ALSO
