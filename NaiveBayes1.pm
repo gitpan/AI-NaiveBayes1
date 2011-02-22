@@ -1,6 +1,6 @@
 # (c) 2003-11 Vlado Keselj http://web.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm 315 2011-02-22 13:46:06Z vlado $
+# $Id: NaiveBayes1.pm 319 2011-02-22 14:08:54Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
@@ -8,8 +8,8 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '1.10';
-($Revision = substr(q$Revision: 315 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '2.000';
+($Revision = substr(q$Revision: 319 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 

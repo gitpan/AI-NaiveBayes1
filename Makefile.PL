@@ -1,5 +1,6 @@
 use ExtUtils::MakeMaker;
-# $Id: Makefile.PL,v 1.8 2007/12/14 15:34:15 vlado Exp $
+#<? read_starfish_conf() !>
+# $Id: Makefile.PL 319 2011-02-22 14:08:54Z vlado $
 
 my $module = 'AI::NaiveBayes1';
 my $name   = 'NaiveBayes1.pm';
@@ -19,8 +20,11 @@ WriteMakefile
   'PL_FILES' => {},
   ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
    (ABSTRACT_FROM => $name, # retrieve abstract from module
-    AUTHOR     => 'Vlado Keselj http://web.cs.dal.ca/~vlado') : 
-   ()
+   # <? echo "   AUTHOR => 'Vlado Keselj $VladoURL')" !>
+   #+
+   AUTHOR => 'Vlado Keselj http://web.cs.dal.ca/~vlado')
+   #-
+   : ()
    ),
   ($ExtUtils::MakeMaker::VERSION ge '6.30_00'? 
    ('LICENSE'         => 'perl', ) : ()),
