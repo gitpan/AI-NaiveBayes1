@@ -63,3 +63,6 @@ Revision history for Perl extension AI::NaiveBayes1.
 
 2.000  Tue Feb 22 09:58:04 AST 2011
 	- fixing lexical sorting of version numbers
+
+2.001  Mon Feb 28 11:18:22 AST 2011
+	- fixed some testing problems due to diffrences in precision
