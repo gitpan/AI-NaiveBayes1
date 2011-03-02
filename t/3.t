@@ -66,11 +66,13 @@ plan skip_all => "YAML module required for the remaining tests in 3.t" if $@;
 
 $nb->export_to_YAML_file('t/tmp1');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
-is("Model:\n" . &shorterdecimals($nb1->print_model), getfile('t/3-1.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb1->print_model),
+		 't/3-1.out', __FILE__, __LINE__);
 
 my $tmp = $nb->export_to_YAML();
 my $nb2 = AI::NaiveBayes1->import_from_YAML($tmp);
-is("Model:\n" . &shorterdecimals($nb2->print_model), getfile('t/3-1.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb2->print_model),
+		 't/3-1.out', __FILE__, __LINE__);
 
 my $p = $nb->predict(attributes=>{outlook=>'sunny',temperature=>'cool',humidity=>'high',windy=>'TRUE'});
 
