@@ -61,11 +61,12 @@ $nb->set_real('size');
 $nb->train;
 
 my $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 
 #putfile('t/5-1.out', $printedmodel);
-is($printedmodel, getfile('t/5-1.out'));
+&compare_by_line($printedmodel, 't/5-1.out', __FILE__, __LINE__);
 
-putfile('t/5-2.out', $nb->export_to_YAML());
+#putfile('t/5-2.out', $nb->export_to_YAML());
 #is($nb->export_to_YAML(), getfile('t/5-2.out'));
 
 eval "require YAML;";
@@ -73,11 +74,13 @@ plan skip_all => "YAML module required for the remaining tests in 5.t" if $@;
 
 $nb->export_to_YAML_file('t/tmp1');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp1');
-is("Model:\n" . $nb1->print_model, getfile('t/5-1.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb1->print_model),
+		 't/5-1.out', __FILE__, __LINE__);
 
 my $tmp = $nb->export_to_YAML();
 my $nb2 = AI::NaiveBayes1->import_from_YAML($tmp);
-is("Model:\n" . $nb2->print_model, getfile('t/5-1.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb2->print_model),
+		 't/5-1.out', __FILE__, __LINE__);
 
 my $p = $nb->predict(attributes=>{morning=>'Y',html=>'Y',size=>4749});
 

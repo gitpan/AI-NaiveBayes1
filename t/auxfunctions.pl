@@ -13,7 +13,7 @@ sub compare_by_line {
 	my $b=$expected; if ($b =~ /\s*\n/) { $b = $`; $expected = $'; }
 	if ($a ne $b) {
 	    if ($flag eq '')
-	    { print STDERR "$testfile:$testline: Failed comparison with $file!\n"; $flag = 1; }
+	    { print STDERR "\n$testfile:$testline: Failed comparison with $file!\n"; $flag = 1; }
 	    print STDERR "     Got: $a\n".
                  	 "Expected: $b\n";
 	}

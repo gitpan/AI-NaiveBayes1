@@ -19,17 +19,18 @@ $nb->add_instances(attributes=>{C=>'N',F=>0},label=>'S=N',cases=>84);
 $nb->train;
 
 my $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 
 #putfile('t/6-1.out', $printedmodel);
-is($printedmodel, getfile('t/6-1.out'));
+&compare_by_line($printedmodel, 't/6-1.out', __FILE__, __LINE__);
 
 eval "require YAML;";
 plan skip_all => "YAML module required for the remaining tests in 6.t" if $@;
 
 $nb->export_to_YAML_file('t/tmp6');
 my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp6');
-
-is("Model:\n" . $nb1->print_model, getfile('t/6-1.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb1->print_model),
+		 't/6-1.out', __FILE__, __LINE__);
 
 my $p = $nb->predict(attributes=>{C=>'Y',F=>0});
 
@@ -54,14 +55,16 @@ $nb->set_real('F');
 $nb->train;
 
 $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 
 #putfile('t/6-3.out', $printedmodel);
-is($printedmodel, getfile('t/6-3.out'));
+&compare_by_line($printedmodel, 't/6-3.out', __FILE__, __LINE__);
 
 $nb->export_to_YAML_file('t/tmp6-2');
 $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp6-2');
 
-is("Model:\n" . $nb1->print_model, getfile('t/6-3.out'));
+&compare_by_line("Model:\n" . &shorterdecimals($nb1->print_model),
+		 't/6-3.out', __FILE__, __LINE__);
 
 $p = $nb->predict(attributes=>{C=>'Y',F=>1});
 

@@ -19,21 +19,22 @@ $nb->add_instances(attributes=>{C=>'N',F=>0},label=>'S=N',cases=>84);
 $nb->train;
 
 my $printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel = &shorterdecimals($printedmodel);
 
-#putfile('t/6-1.out', $printedmodel);
-is($printedmodel, getfile('t/6-1.out'));
+#putfile('t/7-1.out', $printedmodel);
+&compare_by_line($printedmodel, 't/7-1.out', __FILE__, __LINE__);
 
 eval "require YAML;";
 plan skip_all => "YAML module required for the remaining tests in 7.t" if $@;
 
-$nb->export_to_YAML_file('t/tmp6');
-my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp6');
-
-is("Model:\n" . $nb1->print_model, getfile('t/6-1.out'));
+$nb->export_to_YAML_file('t/tmp7');
+my $nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp7');
+&compare_by_line("Model:\n" . &shorterdecimals($nb1->print_model),
+		 't/7-1.out', __FILE__, __LINE__);
 
 my $p = $nb->predict(attributes=>{C=>'Y',F=>0});
 
-#putfile('t/6-2.out', YAML::Dump($p));
+#putfile('t/7-2.out', YAML::Dump($p));
 ok(abs($p->{'S=N'} - 0.580) < 0.001);
 ok(abs($p->{'S=Y'} - 0.420) < 0.001);
 
@@ -58,19 +59,20 @@ $nb->add_table("  C   F   S  count\n".
 $nb->set_real('F');
 $nb->train;
 
-$printedmodel =  "Model:\n" . $nb->print_model;
+$printedmodel =  &shorterdecimals("Model:\n" . $nb->print_model);
 
-#putfile('t/6-3.out', $printedmodel);
-is($printedmodel, getfile('t/6-3.out'));
+#putfile('t/7-3.out', $printedmodel);
+&compare_by_line($printedmodel, 't/7-3.out', __FILE__, __LINE__);
 
-$nb->export_to_YAML_file('t/tmp6-2');
-$nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp6-2');
+$nb->export_to_YAML_file('t/tmp7-2');
+$nb1 = AI::NaiveBayes1->import_from_YAML_file('t/tmp7-2');
 
-is("Model:\n" . $nb1->print_model, getfile('t/6-3.out'));
+&compare_by_line(&shorterdecimals("Model:\n" . $nb1->print_model),
+		 't/7-3.out', __FILE__, __LINE__);
 
 $p = $nb->predict(attributes=>{C=>'Y',F=>1});
 
-#putfile('t/6-4.out', YAML::Dump($p));
+#putfile('t/7-4.out', YAML::Dump($p));
 ok(abs($p->{'S=N'} - 0.339) < 0.001);
 ok(abs($p->{'S=Y'} - 0.661) < 0.001);
 
@@ -99,8 +101,8 @@ $nb->add_table(
 $nb->train;
 $printedmodel =  "Model:\n" . $nb->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
-#putfile('t/7-1.out', $printedmodel);
-is($printedmodel, getfile('t/7-1.out'));
+#putfile('t/7-5.out', $printedmodel);
+&compare_by_line($printedmodel, 't/7-5.out', __FILE__, __LINE__);
 
 $p = $nb->predict(attributes=>{Html=>'N',Caps=>'N',Free=>'Y'});
 # putfile('t/7-2.out', YAML::Dump($p));
