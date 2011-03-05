@@ -1,6 +1,6 @@
 # (c) 2003-11 Vlado Keselj http://web.cs.dal.ca/~vlado
 #
-# $Id: NaiveBayes1.pm 335 2011-03-02 10:47:12Z vlado $
+# $Id: NaiveBayes1.pm 341 2011-03-05 16:39:59Z vlado $
 
 package AI::NaiveBayes1;
 use strict;
@@ -8,8 +8,8 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 @EXPORT = qw(new);
 use vars qw($Version $Revision);
-$Version = $VERSION = '2.003';
-($Revision = substr(q$Revision: 335 $, 10)) =~ s/\s+$//;
+$Version = $VERSION = '2.004';
+($Revision = substr(q$Revision: 341 $, 10)) =~ s/\s+$//;
 
 use vars @EXPORT_OK;
 
@@ -770,7 +770,7 @@ module is a generic, basic Naive Bayes algorithm.
 I would like to thank Yung-chung Lin (xern@ cpan. org) for his
 implementation of the Gaussian model for continuous variables,
 and the following people for bug reports, support, and comments (in
-a random order):
+no particular order):
 
 Michael Stevens
 
@@ -779,7 +779,7 @@ Tom Dyson
 Dan Von Kohorn
 
 CPAN-testers: Andreas Koenig, Alexandr Ciornii, jlatour, Jost.Krieger,
-tvmaly, Matthew Musgrove, Michael Stevens
+tvmaly, Matthew Musgrove, Michael Stevens, Nigel Horne, Graham Crookham
 
 Craig Talbert
 
@@ -787,7 +787,7 @@ and Andrew Brian Clegg.
 
 =head1 AUTHOR
 
-Copyright 2003-11 Vlado Keselj http://www.cs.dal.ca/~vlado.
+Copyright 2003-11 Vlado Keselj http://web.cs.dal.ca/~vlado.
 In 2004 Yung-chung Lin provided implementation of the Gaussian model for
 continous variables.
 
