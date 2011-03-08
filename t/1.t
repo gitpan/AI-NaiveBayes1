@@ -21,7 +21,6 @@ $nb->train;
 my $printedmodel =  "Model:\n" . $nb->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
 #putfile('t/1-1.out', $printedmodel);
-#is($printedmodel, getfile('t/1-1.out'));
 &compare_by_line($printedmodel, 't/1-1.out');
 
 #putfile('t/1-2.out', $nb->export_to_YAML());

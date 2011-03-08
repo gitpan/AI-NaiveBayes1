@@ -75,3 +75,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 
 2.004  Sat Mar  5 12:39:35 AST 2011
 	- added missing files to MANIFES (t/7-3.out and t/7-5.out)
+
+2.005  Tue Mar  8 06:35:43 AST 2011
+	- reduced precision in comparison to avoid testing problems on
+	different platforms (from 14 to 12 digits after decimal point)

@@ -7,20 +7,20 @@ spam=Y   | 0.85
 
 category | html | P( html | category ) 
 ---+---+---
-spam=N   | N    | 0.66666666666666    
-spam=N   | Y    | 0.33333333333333    
+spam=N   | N    | 0.666666666666    
+spam=N   | Y    | 0.333333333333    
 ---+---+---
-spam=Y   | N    | 0.05882352941176   
-spam=Y   | Y    | 0.94117647058823    
+spam=Y   | N    | 0.058823529411   
+spam=Y   | Y    | 0.941176470588    
 ---+---+---
 
 category | morning | P( morning | category ) 
 ---+---+---
-spam=N   | N       | 0.33333333333333       
-spam=N   | Y       | 0.66666666666666       
+spam=N   | N       | 0.333333333333       
+spam=N   | Y       | 0.666666666666       
 ---+---+---
-spam=Y   | N       | 0.64705882352941       
-spam=Y   | Y       | 0.35294117647058       
+spam=Y   | N       | 0.647058823529       
+spam=Y   | Y       | 0.352941176470       
 ---+---+---
 
 category | size | P( size | category )                                    

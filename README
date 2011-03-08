@@ -1,6 +1,6 @@
 <? read_starfish_conf(); echo &readme_line; !>
 #+
-AI/NaiveBayes1 version 2.004
+AI/NaiveBayes1 version 2.005
 ============================
 #-
 

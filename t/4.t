@@ -58,7 +58,6 @@ my $printedmodel =  "Model:\n" . $nb->print_model;
 $printedmodel = &shorterdecimals($printedmodel);
 
 #putfile('t/4-1.out', $printedmodel);
-#is($printedmodel, getfile('t/4-1.out'));
 &compare_by_line($printedmodel, 't/4-1.out', __FILE__, __LINE__);
 
 #putfile('t/4-2.out', $nb->export_to_YAML());
