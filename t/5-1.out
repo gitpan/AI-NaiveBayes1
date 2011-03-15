@@ -25,8 +25,8 @@ spam=Y   | Y       | 0.352941176470
 
 category | size | P( size | category )                                    
 ---+---+---
-spam=N   | real | Gaussian(mean=1443.33333333333,stddev=1521.30777074638) 
+spam=N   | real | Gaussian(mean=1443.3333333333,stddev=1521.3077707463) 
 ---+---+---
-spam=Y   | real | Gaussian(mean=2344.64705882353,stddev=1397.40106721265) 
+spam=Y   | real | Gaussian(mean=2344.6470588235,stddev=1397.4010672126) 
 ---+---+---
 

@@ -23,6 +23,7 @@ sub compare_by_line {
 
 sub shorterdecimals {
     local $_ = shift;
+    s/(\d{4}\.\d{10})\d+/$1/g;
     s/(\.\d{12})\d+/$1/g;
     s/---+/---/g;
     return $_;

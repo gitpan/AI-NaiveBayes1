@@ -79,3 +79,7 @@ Revision history for Perl extension AI::NaiveBayes1.
 2.005  Tue Mar  8 06:35:43 AST 2011
 	- reduced precision in comparison to avoid testing problems on
 	different platforms (from 14 to 12 digits after decimal point)
+
+2.006  Tue Mar 15 06:17:04 ADT 2011
+	- reduced precision in \d{4}.\d+ to \d{4}.\d{10} avoid testing
+	problems on different platforms
